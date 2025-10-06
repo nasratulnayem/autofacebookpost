@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trendy Text Thumbnail 1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .thumbnail-container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px;
+            box-sizing: border-box;
+        }
+        .badge {
+            font-family: 'Inter', sans-serif;
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 700;
+            font-size: 38px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .main-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 100px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 0;
+            color: white;
+            text-transform: uppercase;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.25);
+        }
+        .main-title .highlight {
+            color: #f9ff00;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #f9ff00;
+            color: #111;
+            font-weight: 700;
+            font-size: 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-top: 30px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="thumbnail-container">
+        <div class="badge">{{ badge }}</div>
+        <h1 class="main-title">{{ main_title|safe }}</h1>
+        <a href="#" class="btn">{{ sub_title }}</a>
+    </div>
+</body>
+</html>

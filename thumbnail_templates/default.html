@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Thumbnail Template</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a;
+            font-family: 'Poppins', sans-serif;
+        }
+        .thumbnail-container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        }
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #005de6 0%, #7d2ae8 100%);
+            z-index: 1;
+        }
+        .background::after {
+            content: '';
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            top: -10%;
+            left: -10%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%),
+                        radial-gradient(circle at 70% 70%, rgba(0,0,0,0.15), transparent 60%);
+            z-index: 1;
+        }
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            box-sizing: border-box;
+        }
+        .text-content { max-width: 55%; color: white; }
+        .badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: linear-gradient(90deg, #ffdd00, #ff9900);
+            color: #111;
+            font-weight: 800;
+            font-size: 42px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+        .main-title {
+            font-size: 95px;
+            font-weight: 900;
+            line-height: 1.05;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 4px 4px 10px rgba(0,0,0,0.35);
+        }
+        .main-title .highlight { color: #ffdd00; }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #ffdd00;
+            color: #111;
+            font-weight: 700;
+            font-size: 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-top: 30px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .image-content {
+            position: absolute;
+            right: -5%;
+            bottom: 0;
+            height: 110%;
+            width: 60%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .person-image {
+            width: 120%;
+            height: auto;
+            object-fit: cover;
+            filter: drop-shadow(0px 12px 25px rgba(0,0,0,0.5));
+            transform: translateX(4%) translateY(29%) scale(0.8);
+        }
+        .logo {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 120px;
+            filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.3));
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="thumbnail-container">
+        <div class="background"></div>
+        <div class="content-wrapper">
+            <div class="text-content">
+                <div class="badge">{{ badge }}</div>
+                <h1 class="main-title">{{ main_title|safe }}</h1>
+                <a href="#" class="btn">{{ sub_title }}</a>
+            </div>
+            <div class="image-content">
+                <img src="{{ image_url }}" alt="Person pointing" class="person-image">
+                <img src="" alt="" class="logo">
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Settings</h1>
+        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <h2>Facebook Credentials</h2>
+        <form action="{{ url_for('save_settings') }}" method="post">
+            <div class="form-group">
+                <label for="facebook_access_token">Facebook Access Token</label>
+                <input type="text" name="facebook_access_token" id="facebook_access_token" value="{{ credentials.facebook_access_token }}" placeholder="Your Facebook Access Token" required>
+            </div>
+            <div class="form-group">
+                <label for="facebook_page_id">Facebook Page ID</label>
+                <input type="text" name="facebook_page_id" id="facebook_page_id" value="{{ credentials.facebook_page_id }}" placeholder="Your Facebook Page ID" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Facebook Credentials</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Image URLs</h2>
+        <p>Store a list of image URLs (one per line) to use in your thumbnails.</p>
+        <form action="{{ url_for('save_image_urls') }}" method="post">
+            <div class="form-group">
+                <label for="image_urls">Image URLs</label>
+                <textarea name="image_urls" id="image_urls" rows="10" placeholder="https://example.com/image1.png&#10;https://example.com/image2.jpg">{{ image_urls|join('\n') }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Image URLs</button>
+        </form>
+    </div>
+{% endblock %}

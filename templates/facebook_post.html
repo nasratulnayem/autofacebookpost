@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% block title %}Post to Facebook{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Post to Facebook</h1>
+        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+    </div>
+
+    <div class="social-post-layout">
+        <div class="card">
+            <h2>Thumbnail Preview</h2>
+            <img src="{{ url_for('generated_file', filename=thumbnail.filename) }}" alt="Thumbnail Preview" style="width: 100%; border-radius: 8px;">
+        </div>
+
+        <div class="card">
+            <h2>Facebook Post Details</h2>
+            <form id="facebook-post-form" action="{{ url_for('publish_facebook_post', thumbnail_id=thumbnail.id) }}" method="post">
+                <div class="form-group">
+                    <label for="caption">Caption</label>
+                    <textarea name="caption" id="caption" rows="5" placeholder="Write your post caption here..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="first_comment">First Comment (optional)</label>
+                    <textarea name="first_comment" id="first_comment" rows="3" placeholder="Add a first comment..."></textarea>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- Reimagined Scheduling Interface -->
+                <div class="form-group">
+                    <label>Schedule Post</label>
+                    <div class="reimagined-scheduler">
+                        <div id="schedule-datepicker"></div>
+                        <div class="time-slot-wrapper">
+                            <div class="time-slot-header" id="time-slot-header">Select a time</div>
+                            <div class="time-slot-container" id="time-slots"></div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="schedule_date" name="schedule_date">
+                <input type="hidden" id="schedule_time" name="schedule_time">
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" id="publish-now-btn" class="btn btn-primary">Publish Now</button>
+                    <button type="button" id="schedule-post-btn" class="btn">Schedule Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="response-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-message"></p>
+            <div id="modal-loader" class="loader" style="display: none;"></div>
+        </div>
+    </div>
+
+    <style>
+        .social-post-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: flex-start; }
+        .form-divider { border: none; height: 1px; background-color: var(--border-color); margin: 2rem 0; }
+
+        /* --- Reimagined Scheduler --- */
+        .reimagined-scheduler {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr; /* Stacks on mobile by default */
+            gap: 1.5rem;
+        }
+        .time-slot-header { font-weight: 600; color: var(--text-color); margin-bottom: 0.75rem; font-size: 1rem; }
+        .time-slot-container { max-height: 260px; overflow-y: auto; padding-right: 10px; }
+        #time-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; }
+        .time-slot-btn {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.75rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+        }
+        .time-slot-btn:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        .time-slot-btn.selected {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(35, 134, 54, 0.5);
+        }
+
+        /* Desktop layout for scheduler */
+        @media (min-width: 768px) {
+            .reimagined-scheduler {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+        /* Main layout breakpoint */
+        @media (max-width: 900px) {
+            .social-post-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modal styles */
+        .modal { z-index: 1000; position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
+        .modal-content { background-color: var(--card-color); color: var(--text-color); margin: auto; padding: 25px; border: 1px solid var(--border-color); width: 90%; max-width: 500px; border-radius: 8px; text-align: center; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
+        .close-button { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
+        .close-button:hover, .close-button:focus { color: #fff; }
+        .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid var(--primary-color); width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Flatpickr Theme for Reimagined Layout */
+        .flatpickr-calendar { background: transparent; border: none; box-shadow: none; width: 100%; }
+        .flatpickr-months { background: transparent; padding: 0; }
+        .flatpickr-months .flatpickr-month { color: var(--text-color); fill: var(--text-color); height: 34px; }
+        .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { fill: var(--text-muted); transition: fill 0.2s; }
+        .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--primary-color); }
+        .flatpickr-monthDropdown-months { background: var(--bg-color) !important; border: 1px solid #22272e !important; border-radius: 4px !important; }
+        .flatpickr-monthDropdown-month { color: var(--text-color) !important; background: transparent !important; }
+        .flatpickr-monthDropdown-month:hover { background: var(--primary-color) !important; color: white !important; }
+        .flatpickr-current-month input.cur-year { font-weight: bold; color: var(--text-color); }
+        span.flatpickr-weekday { color: var(--text-muted); font-weight: 500; font-size: 10px; text-transform: uppercase; }
+        .dayContainer { padding: 0; }
+        .flatpickr-day { color: var(--text-color); border: none; font-weight: 500; border-radius: 4px; line-height: 38px; height: 38px; }
+        .flatpickr-day:hover, .flatpickr-day:focus { background: #22272e; outline: none; }
+        .flatpickr-day.today { box-shadow: inset 0 0 0 1px var(--primary-color); }
+        .flatpickr-day.today:hover { background: var(--primary-color); color: white; }
+        .flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--primary-hover); color: white; box-shadow: none; }
+        .flatpickr-day.disabled, .flatpickr-day.disabled:hover { background: transparent; color: var(--text-muted); opacity: 0.3; cursor: not-allowed; }
+        .flatpickr-time { display: none; }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const datePickerHiddenInput = document.getElementById('schedule_date');
+    const timePickerHiddenInput = document.getElementById('schedule_time');
+    const timeSlotsContainer = document.getElementById('time-slots');
+    const timeSlotHeader = document.getElementById('time-slot-header');
+    const form = document.getElementById('facebook-post-form');
+    const modal = document.getElementById('response-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalLoader = document.getElementById('modal-loader');
+    const closeButton = document.querySelector('.close-button');
+
+    function generateTimeSlots(selectedDate) {
+        timeSlotsContainer.innerHTML = '';
+        const now = new Date();
+        const isToday = selectedDate.toDateString() === now.toDateString();
+        let startHour = 0, startMinute = 0;
+        if (isToday) {
+            const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
+            startHour = tenMinutesFromNow.getHours();
+            startMinute = Math.ceil(tenMinutesFromNow.getMinutes() / 10) * 10;
+            if (startMinute >= 60) { startHour++; startMinute = 0; }
+        }
+        let firstAvailableSlot = null;
+        for (let h = startHour; h < 24; h++) {
+            for (let m = (h === startHour ? startMinute : 0); m < 60; m += 10) {
+                const hour12 = h % 12 === 0 ? 12 : h % 12;
+                const ampm = h < 12 ? 'AM' : 'PM';
+                const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                const displayString = `${String(hour12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'time-slot-btn';
+                btn.textContent = displayString;
+                btn.dataset.time = timeString;
+                timeSlotsContainer.appendChild(btn);
+                if (!firstAvailableSlot) firstAvailableSlot = btn;
+            }
+        }
+        if (firstAvailableSlot) {
+            document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
+            firstAvailableSlot.classList.add('selected');
+            timePickerHiddenInput.value = firstAvailableSlot.dataset.time;
+        } else {
+            timePickerHiddenInput.value = '';
+        }
+    }
+
+    function updateTimeSlotHeader(date) {
+        timeSlotHeader.textContent = `Available times for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    }
+
+    function updateUIForDate(selectedDate) {
+        const year = selectedDate.getFullYear(), month = String(selectedDate.getMonth() + 1).padStart(2, '0'), day = String(selectedDate.getDate()).padStart(2, '0');
+        datePickerHiddenInput.value = `${year}-${month}-${day}`;
+        updateTimeSlotHeader(selectedDate);
+        generateTimeSlots(selectedDate);
+    }
+
+    const fp = flatpickr("#schedule-datepicker", {
+        inline: true, dateFormat: "Y-m-d", defaultDate: new Date(), minDate: "today",
+        onChange: function(selectedDates) {
+            updateUIForDate(selectedDates[0]);
+        },
+    });
+
+    timeSlotsContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('time-slot-btn')) {
+            document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
+            e.target.classList.add('selected');
+            timePickerHiddenInput.value = e.target.dataset.time;
+        }
+    });
+
+    // Initial UI population
+    updateUIForDate(fp.selectedDates[0]);
+
+    function handleFormSubmit(scheduleOption) {
+        if (scheduleOption === 'schedule') {
+            const dateVal = document.getElementById('schedule_date').value;
+            const timeVal = document.getElementById('schedule_time').value;
+            if (!dateVal || !timeVal) {
+                modalTitle.textContent = 'Error';
+                modalMessage.textContent = 'Please select a date and a time to schedule your post.';
+                modalLoader.style.display = 'none';
+                modal.style.display = 'flex';
+                return;
+            }
+        }
+        modalTitle.textContent = 'Processing...';
+        modalMessage.textContent = `Please wait while we ${scheduleOption} your post.`;
+        modalLoader.style.display = 'block';
+        modal.style.display = 'flex';
+        const formData = new FormData(form);
+        formData.append('schedule_option', scheduleOption);
+        fetch(form.action, { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            modalLoader.style.display = 'none';
+            if (data.status === 'success') {
+                modalTitle.textContent = 'Success!';
+                modalMessage.innerHTML = data.message + '<br><br><a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>';
+                form.reset();
+                fp.setDate(new Date(), true);
+            } else {
+                modalTitle.textContent = 'Error';
+                modalMessage.textContent = data.message;
+            }
+        })
+        .catch(error => {
+            modalLoader.style.display = 'none';
+            modalTitle.textContent = 'Error';
+            modalMessage.textContent = 'An unexpected error occurred.';
+            console.error('Error:', error);
+        });
+    }
+
+    document.getElementById('publish-now-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        handleFormSubmit('now');
+    });
+
+    document.getElementById('schedule-post-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        handleFormSubmit('schedule');
+    });
+
+    closeButton.onclick = function() { modal.style.display = 'none'; }
+    window.onclick = function(event) { if (event.target == modal) { modal.style.display = 'none'; } }
+});
+</script>
+{% endblock %}

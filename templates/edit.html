@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Edit Thumbnail{% endblock %}
+
+{% block content %}
+    <h1>Edit Thumbnail</h1>
+
+    <div class="responsive-layout">
+        <div style="flex: 1;">
+            <div class="card">
+                <h2>Editing Data</h2>
+                <form action="{{ url_for('update_thumbnail', thumbnail_id=thumbnail.id) }}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="template_select">Template</label>
+                        <select name="template_select" id="template_select">
+                            {% for t in templates %}
+                                <option value="{{ t }}" {% if t == thumbnail.template %}selected{% endif %}>{{ t.replace('template_', '').replace('.html', '')|replace('_', ' ')|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% for key, value in thumbnail.data.items() %}
+                        {% if key != 'image_url' %}
+                            <div class="form-group">
+                                <label for="{{ key }}">{{ key.replace('_', ' ')|title }}</label>
+                                <textarea name="{{ key }}" id="{{ key }}" rows="3" style="font-family: monospace; font-size: 14px;">{{ value }}</textarea>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="form-group">
+                        <label>Main Image</label>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 0.5rem;">Upload a new image to replace the current one, or edit the URL below.</p>
+                        <input type="file" name="image_file" id="image_file" class="inputfile" onchange="updateFileName(this)">
+                        <label for="image_file" class="btn"><span>Choose an image&hellip;</span></label>
+                        <label for="image_url_select">Image URL</label>
+                        <select name="image_url_select" id="image_url_select" onchange="handleImageURLChange(this)">
+                            <option value="">-- Select a URL --</option>
+                            {% for url in image_urls %}
+                                <option value="{{ url }}" {% if url == thumbnail.data.image_url %}selected{% endif %}>{{ url }}</option>
+                            {% endfor %}
+                            <option value="custom">Enter a custom URL...</option>
+                        </select>
+                        <input type="text" name="image_url" id="image_url" value="{{ thumbnail.data.image_url }}" style="margin-top: 0.5rem; {% if thumbnail.data.image_url not in image_urls %}display: block;{% else %}display: none;{% endif %}">
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary">Update & Regenerate</button>
+                        <a href="{{ url_for('social_hub', thumbnail_id=thumbnail.id) }}" class="btn">Post to Social</a>
+                        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div style="flex: 1;">
+             <div class="card">
+                <h2>Live Preview</h2>
+                <img src="{{ url_for('generated_file', filename=thumbnail.filename) }}?v={{ range(9999) | random }}" alt="Thumbnail Preview" style="width: 100%; border-radius: 6px;">
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .responsive-layout {
+            display: flex;
+            gap: 2rem;
+        }
+        .inputfile {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        .inputfile + label.btn {
+            cursor: pointer;
+        }
+
+        @media (max-width: 800px) {
+            .responsive-layout {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <script>
+        // This script is already loaded in index.html, but we include it here
+        // as a fallback in case this page is accessed directly.
+        function updateFileName(input) {
+            const label = input.nextElementSibling;
+            const labelVal = label.querySelector('span').textContent;
+            let fileName = '';
+            if (input.files && input.files.length > 1) {
+                fileName = (input.getAttribute('data-multiple-caption') || '').replace('{count}', input.files.length);
+            } else {
+                fileName = input.value.split('\\').pop();
+            }
+
+            if (fileName) {
+                label.querySelector('span').textContent = fileName;
+            } else {
+                label.querySelector('span').textContent = labelVal;
+            }
+        }
+
+        function handleImageURLChange(select) {
+            const customUrlInput = document.getElementById('image_url');
+            if (select.value === 'custom') {
+                customUrlInput.style.display = 'block';
+                customUrlInput.value = '';
+                customUrlInput.focus();
+            } else {
+                customUrlInput.style.display = 'none';
+                customUrlInput.value = select.value;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const editForm = document.querySelector('form');
+            const previewImage = document.querySelector('img[alt="Thumbnail Preview"]');
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+
+            editForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.textContent = 'Regenerating...';
+                submitBtn.disabled = true;
+
+                const formData = new FormData(editForm);
+                const thumbnailId = editForm.action.split('/').pop();
+
+                try {
+                    const response = await fetch(`/update/${thumbnailId}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        // Add a cache-busting query parameter
+                        previewImage.src = result.new_image_url + '&t=' + new Date().getTime();
+                        displayFlashMessage('Thumbnail updated successfully!', 'success');
+                    } else {
+                        displayFlashMessage(`Error: ${result.message}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error updating thumbnail:', error);
+                    displayFlashMessage('An unexpected error occurred.', 'error');
+                } finally {
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+{% endblock %}

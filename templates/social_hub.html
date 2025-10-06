@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Social Post Hub{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <a href="{{ url_for('index') }}" class="modern-btn secondary modern-btn-small" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%);">&larr; Back to Dashboard</a>
+    <h2>Social Post Hub</h2>
+    <p>Compose your post, then select a platform to publish or schedule it.</p>
+</div>
+
+<form id="social-post-form" method="post" enctype="multipart/form-data">
+    <div class="hub-layout">
+        <div class="hub-preview-card">
+            <div id="media-preview-container">
+                <img src="{{ url_for('generated_file', filename=thumbnail.filename) }}" alt="Thumbnail Preview" id="media-preview-image">
+                <video src="" id="media-preview-video" style="display: none;" controls></video>
+            </div>
+            <input type="file" name="custom_media" id="custom_media_input" class="inputfile" accept="image/*,video/*">
+            <label for="custom_media_input" class="modern-btn secondary" style="display: block; width: fit-content; margin: 1rem auto 0;">Change Media</label>
+        </div>
+
+        <div class="hub-form-card">
+            <div class="form-group">
+                <label for="caption">Caption</label>
+                <textarea name="caption" id="caption" rows="5" placeholder="Write your post caption here..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="first_comment">First Comment (optional)</label>
+                <textarea name="first_comment" id="first_comment" rows="2" placeholder="Add a first comment (e.g., for hashtags)..."></textarea>
+            </div>
+
+            <div class="expandable-section">
+                <button type="button" id="expand-edit-btn" class="modern-btn secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Thumbnail Data
+                </button>
+                <div class="expandable-content" id="edit-data-section">
+                    {% for key, value in thumbnail.data.items() %}
+                        <div class="form-group small">
+                            <label for="edit_{{ key }}">{{ key.replace('_', ' ')|title }}</label>
+                            <textarea name="{{ key }}" id="edit_{{ key }}" rows="2">{{ value }}</textarea>
+                        </div>
+                    {% endfor %}
+                    <button type="button" id="regenerate-btn" class="modern-btn secondary">Regenerate Thumbnail</button>
+                </div>
+            </div>
+
+            <hr class="form-divider">
+
+            <div class="form-group">
+                <label>1. Choose Platform</label>
+                <div class="social-platforms">
+                    <button type="button" class="platform-btn active" data-platform="facebook" title="Facebook">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04c-5.5 0-10 4.49-10 10s4.5 10 10 10 10-4.49 10-10S17.5 2.04 12 2.04zm3.5 6.76h-1.75c-.41 0-.62.31-.62.62v1.38h2.37l-.31 2.38h-2.06v7.12h-2.5V13.18H9.25v-2.38h1.62v-1.62c0-1.66 1.02-2.58 2.5-2.58h2.13v2.38z"/></svg>
+                    </button>
+                    <button type="button" class="platform-btn add-new" title="Connect new account">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="schedule-datetime">2. Schedule (Optional)</label>
+                <input type="text" id="schedule-datetime" name="schedule_datetime" placeholder="Publishing now (click to schedule)">
+            </div>
+
+            <div class="hub-actions">
+                 <button type="button" id="post-btn" class="modern-btn">Post to Facebook</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .page-intro { text-align: center; margin-bottom: 2rem; position: relative; }
+    .btn-back { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+    .page-intro h2 { font-size: 2rem; font-weight: 700; margin: 0 0 0.5rem 0; }
+    .page-intro p { font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+    .hub-layout { display: grid; gap: 2rem; align-items: flex-start; grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .hub-layout { grid-template-columns: 1fr 1.2fr; } }
+    @media (max-width: 767px) { .hub-layout { grid-template-columns: 1fr; } }
+
+    .hub-preview-card, .hub-form-card { background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; }
+    #media-preview-container { width: 100%; background-color: var(--bg-color); border-radius: 6px; overflow: hidden; }
+    #media-preview-container img, #media-preview-container video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .inputfile { width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1; }
+    .inputfile + label { cursor: pointer; }
+
+    .form-divider { border: none; height: 1px; background-color: var(--border-color); margin: 1.5rem 0; }
+    .expandable-section { border: 1px solid var(--border-color); border-radius: 6px; margin-top: 1rem; }
+    .expand-toggle { background: transparent; border: none; color: var(--text-muted); width: 100%; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
+    .expand-toggle:hover { color: var(--text-color); }
+    .expandable-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; padding: 0 1rem; }
+    .expandable-content.open { max-height: 1000px; padding: 1rem; border-top: 1px solid var(--border-color); }
+    .form-group.small textarea { font-size: 0.85rem; rows: 1; }
+
+    .social-platforms { display: flex; gap: 1rem; align-items: center; }
+    .platform-btn { background-color: transparent; border: 2px solid var(--border-color); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); transition: all 0.2s; }
+    .platform-btn:hover:not(:disabled) { color: var(--text-color); border-color: var(--text-muted); transform: translateY(-2px); }
+    .platform-btn.active { color: var(--primary-color); border-color: var(--primary-color); box-shadow: 0 0 15px -5px var(--primary-color); }
+    .platform-btn.add-new { border-style: dashed; }
+    .platform-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .hub-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .hub-actions .btn { flex-grow: 1; padding: 0.8rem; font-size: 1rem; }
+
+    .flatpickr-calendar { background: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+    .flatpickr-months .flatpickr-month, span.flatpickr-weekday { color: var(--text-color); fill: var(--text-color); }
+    .flatpickr-day { color: var(--text-color); }
+    .flatpickr-day:hover { background: var(--border-color); }
+    .flatpickr-day.today { border-color: var(--primary-color); }
+    .flatpickr-day.selected { background: var(--primary-color); border-color: var(--primary-color); }
+    .flatpickr-time { border-top: 1px solid var(--border-color); }
+    .flatpickr-time .numInput, .flatpickr-time .flatpickr-am-pm { background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('social-post-form');
+
+    // Media Preview Logic
+    const customMediaInput = document.getElementById('custom_media_input');
+    const previewImage = document.getElementById('media-preview-image');
+    const previewVideo = document.getElementById('media-preview-video');
+
+    customMediaInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            if (file.type.startsWith('image/')) {
+                previewImage.src = event.target.result;
+                previewImage.style.display = 'block';
+                previewVideo.style.display = 'none';
+            } else if (file.type.startsWith('video/')) {
+                previewVideo.src = event.target.result;
+                previewVideo.style.display = 'block';
+                previewImage.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Expandable Editor Logic
+    document.getElementById('expand-edit-btn').addEventListener('click', () => {
+        document.getElementById('edit-data-section').classList.toggle('open');
+    });
+
+    // Regenerate Thumbnail Logic
+    document.getElementById('regenerate-btn').addEventListener('click', async () => {
+        const regenerateBtn = document.getElementById('regenerate-btn');
+        const editFormData = new FormData();
+        document.getElementById('edit-data-section').querySelectorAll('textarea').forEach(textarea => {
+            editFormData.append(textarea.name, textarea.value);
+        });
+        
+        regenerateBtn.textContent = 'Regenerating...';
+        regenerateBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/update/{{ thumbnail.id }}`, { method: 'POST', body: editFormData });
+            const result = await response.json();
+            if (result.status === 'success') {
+                previewImage.src = result.new_image_url + '&t=' + new Date().getTime();
+                previewVideo.style.display = 'none';
+                previewImage.style.display = 'block';
+                alert('Thumbnail regenerated successfully!');
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            alert('An unexpected error occurred during regeneration.');
+        } finally {
+            regenerateBtn.textContent = 'Regenerate Thumbnail';
+            regenerateBtn.disabled = false;
+        }
+    });
+
+    // Scheduler Logic
+    const fp = flatpickr("#schedule-datetime", {
+        enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "F j, Y at h:i K",
+        minuteIncrement: 10, allowInput: false,
+    });
+
+    // Main Form Submission
+    document.getElementById('post-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        const scheduleValue = document.getElementById('schedule-datetime').value;
+        const scheduleOption = scheduleValue ? 'schedule' : 'now';
+        
+        const processId = ProcessManager.create(`Posting to Facebook...`);
+
+        const formData = new FormData(form);
+        formData.append('schedule_option', scheduleOption);
+
+        fetch("{{ url_for('publish_facebook_post', thumbnail_id=thumbnail.id) }}", { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                ProcessManager.update(processId, data.message, true);
+            } else {
+                ProcessManager.update(processId, data.message, false);
+            }
+        })
+        .catch(error => {
+            ProcessManager.update(processId, 'An unexpected network error occurred.', false);
+            console.error('Error:', error);
+        });
+    });
+
+    // "Add New" button alert
+    document.querySelector('.add-new').addEventListener('click', () => {
+        alert('Connecting to new social media accounts is coming soon!');
+    });
+});
+</script>
+{% endblock %}

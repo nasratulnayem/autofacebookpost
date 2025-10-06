@@ -1,0 +1,5 @@
+Flask
+playwright
+requests
+pytz
+gunicorn

@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Template Editor{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Template Editor</h1>
+        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+    </div>
+
+    <div class="editor-layout">
+        <div class="card file-list">
+            <h3>Templates</h3>
+            <ul id="template-list">
+                {% for template in templates %}
+                    <li id="template-{{ template }}" onclick="loadTemplate('{{ template }}')">{{ template }}</li>
+                {% endfor %}
+            </ul>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;" onclick="createNew()">Create New</button>
+            <form action="{{ url_for('upload_template_file') }}" method="post" enctype="multipart/form-data" id="upload-form">
+                <label for="file-upload" class="btn" style="width: 100%; text-align: center; box-sizing: border-box;"><span>Upload File</span></label>
+                <input type="file" name="file" id="file-upload" class="inputfile" onchange="document.getElementById('upload-form').submit()">
+            </form>
+        </div>
+
+        <div class="card editor-main">
+            <form action="{{ url_for('save_template') }}" method="post">
+                <div class="form-group">
+                    <label for="filename">Filename</label>
+                    <input type="text" name="filename" id="filename" placeholder="new_template.html" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Template Code</label>
+                    <textarea name="content" id="content" rows="25"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Template</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Template Guide</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Your HTML needs placeholders for the data from the editor. Here’s how they match up:</p>
+            <ul class="guide-list">
+                <li>
+                    <code>{{ badge }}</code>
+                    <p>A short piece of text, like a category or part number.</p>
+                    <small>Example: <strong>Part 2</strong></small>
+                </li>
+                <li>
+                    <code>{{ main_title|safe }}</code>
+                    <p>The main headline. Use the <code>|safe</code> filter to allow HTML for styling, like highlighting a word.</p>
+                    <small>Example: <strong>Another &lt;span class='highlight'&gt;AWESOME&lt;/span&gt; Video</strong></small>
+                </li>
+                <li>
+                    <code>{{ sub_title }}</code>
+                    <p>The secondary line of text, or subtitle.</p>
+                    <small>Example: <strong>From Scratch in 2025</strong></small>
+                </li>
+                <li>
+                    <code>{{ image_url }}</code>
+                    <p>The URL for the main image, handled by the upload field.</p>
+                    <small>Example: <strong>https://.../PERSON.png</strong></small>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <style>
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr 0.8fr;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        .file-list ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .file-list li {
+            padding: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .file-list li:hover, .file-list li.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .file-list li.highlight-glow {
+            animation: glow 2s ease-out;
+        }
+        #content {
+            font-family: monospace;
+            font-size: 14px;
+            background-color: #010409;
+            color: #c9d1d9;
+            height: 60vh;
+        }
+        .guide-list {
+            list-style: none;
+            padding: 0;
+        }
+        .guide-list li {
+            margin-bottom: 1rem;
+            border-left: 2px solid var(--border-color);
+            padding-left: 1rem;
+        }
+        .guide-list code {
+            font-size: 1rem;
+            background-color: var(--bg-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .guide-list p {
+            margin: 0.25rem 0;
+            color: var(--text-muted);
+        }
+        .guide-list small {
+            font-style: italic;
+        }
+        .inputfile {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        .inputfile + label.btn {
+            cursor: pointer;
+        }
+
+        @media (max-width: 1200px) {
+            .editor-layout {
+                grid-template-columns: 250px 1fr;
+            }
+            .editor-layout > .card:last-child {
+                grid-column: 1 / -1; /* Span full width */
+            }
+        }
+        @media (max-width: 992px) {
+            .editor-layout {
+                grid-template-columns: 1fr;
+            }
+            .file-list ul {
+                max-height: 200px;
+            }
+        }
+        @media (max-width: 768px) {
+            .editor-layout {
+                gap: 1rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .file-list, .editor-main, .card {
+                padding: 1rem;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll and Glow for template files
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightFile = urlParams.get('highlight_file');
+
+            if (highlightFile) {
+                const elementToHighlight = document.getElementById('template-' + highlightFile);
+                if (elementToHighlight) {
+                    elementToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    elementToHighlight.classList.add('highlight-glow');
+                    setTimeout(() => {
+                        elementToHighlight.classList.remove('highlight-glow');
+                    }, 2000);
+                }
+            }
+        });
+
+        const filenameInput = document.getElementById('filename');
+        const contentInput = document.getElementById('content');
+        const templateList = document.getElementById('template-list');
+
+        function createNew() {
+            filenameInput.value = 'new_template.html';
+            contentInput.value = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>New Thumbnail</title>\n    <style>\n        /* Add your CSS here */\n        body { font-family: sans-serif; }\n        .thumbnail-container {\n            width: 1280px;\n            height: 720px;\n            /* Start designing! */\n        }\n    </style>\n</head>\n<body>\n    <div class="thumbnail-container">\n        <h1>{{ main_title|safe }}</h1>\n        <p>{{ sub_title }}</p>\n        <img src="{{ image_url }}">\n    </div>\n</body>\n</html>`;
+            clearActiveState();
+        }
+
+        function clearActiveState() {
+            templateList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+        }
+
+        async function loadTemplate(filename) {
+            try {
+                const response = await fetch(`/templates/get/${filename}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                filenameInput.value = filename;
+                contentInput.value = data.content;
+                
+                clearActiveState();
+                const li = Array.from(templateList.querySelectorAll('li')).find(el => el.textContent === filename);
+                if (li) {
+                    li.classList.add('active');
+                }
+
+            } catch (error) {
+                console.error('Failed to load template:', error);
+                alert('Could not load template content.');
+            }
+        }
+    </script>
+{% endblock %}

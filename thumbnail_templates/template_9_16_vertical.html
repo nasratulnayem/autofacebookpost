@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9:16 Vertical Redesign</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Color Palette: Near-Black (#141414), Neon Green (#00fd69), White (#FFFFFF) */
+        
+        /* Base styling */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Container and Background - 9:16 ratio, Near-Black */
+        .thumbnail-container {
+            width: 720px; /* 9 */
+            height: 1280px; /* 16 */
+            position: relative;
+            overflow: hidden;
+            background: #141414; /* Near-Black background */
+        }
+        
+        /* Layout - Text stacked at the top, image large and centered below */
+        .content-wrapper { 
+            position: relative; 
+            z-index: 2; 
+            display: flex; 
+            flex-direction: column; /* Stacked vertically */
+            justify-content: flex-start; /* Start text at the top */
+            align-items: center; /* Center everything horizontally */
+            width: 100%; 
+            height: 100%; 
+            padding: 50px 40px; 
+            box-sizing: border-box; 
+            text-align: center; /* Center text content */
+        }
+        
+        .text-content { 
+            max-width: 90%; /* Use most of the width */
+            color: white; 
+            margin-bottom: 30px; /* Space between text and person */
+        }
+        
+        /* Badge - High contrast neon green outline and text */
+        .badge { 
+            display: inline-block; 
+            padding: 6px 20px; 
+            border: 3px solid #00fd69; /* Neon Green Border */
+            color: #00fd69; /* Neon Green Text */
+            font-weight: 700; 
+            font-size: 36px; /* Adjusted size for 9:16 */
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            text-transform: uppercase; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 2px;
+        }
+        
+        /* Main Title - Extremely bold, highly readable, white text */
+        .main-title { 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 72px; /* Adjusted size for 9:16 */
+            font-weight: 900; 
+            line-height: 1.1; 
+            margin: 0; 
+            text-transform: uppercase; 
+            color: white; 
+        }
+        
+        /* Title Highlight - Neon Green for eye-catching contrast */
+        .main-title .highlight { 
+            color: #00fd69; /* Neon Green highlight */
+        }
+        
+        /* Call-to-Action Button - Neon Green background for a 'pop' */
+        .btn {
+            display: block; /* Full width button */
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 15px 40px;
+            background: #00fd69; /* Neon Green background */
+            color: #141414; /* Near-Black text on green for best contrast */
+            font-weight: 700;
+            font-size: 28px;
+            border-radius: 5px; 
+            text-decoration: none;
+            margin-top: 25px; 
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(0, 253, 105, 0.5); /* Glowing green shadow */
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Image Content - Takes up the lower space */
+        .image-content { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0;
+            width: 100%; /* Full width */
+            height: 70%; /* Takes up 70% of the vertical space */
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        
+        /* Person Image - Maximize size within the frame for impact */
+        .person-image { 
+            width: 130%; /* Slightly larger to fill the background */
+            height: auto; 
+            object-fit: cover; 
+            filter: none; 
+            /* Adjusted transform for centered, full-figure focus */
+            transform: translateY(20%) scale(1.0); 
+        }
+    </style>
+</head>
+<body>
+    <div class="thumbnail-container">
+        <div class="image-content">
+            <img src="{{ image_url }}" class="person-image">
+        </div>
+        <div class="content-wrapper">
+            <div class="text-content">
+                <div class="badge">{{ badge }}</div>
+                <h1 class="main-title">{{ main_title|safe }}</h1>
+                <a href="#" class="btn">{{ sub_title }}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
